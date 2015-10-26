@@ -1,0 +1,7 @@
+Download dependencies:
+curl -sS https://getcomposer.org/installer | php
+php composer.phar install
+
+
+Run tests:
+./vendor/bin/phpunit test/GccRunnerTest.php

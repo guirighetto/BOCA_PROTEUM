@@ -1,0 +1,16 @@
+{
+	"name": "magsilva/boca",
+	"description": "BOCA",
+	"version": "2.0.0-dev",
+	"type": "project",
+	"require": {
+		"cogpowered/finediff": "0.3.*"	
+	},
+	"require-dev": {
+		"phpunit/phpunit": "4.3.*",
+		"phpunit/php-invoker": "*",
+		"phpunit/dbunit": ">=1.2",
+		"phpunit/phpunit-selenium": ">=1.2"
+	}
+}
+

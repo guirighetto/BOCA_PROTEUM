@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<buildpath>
+	<buildpathentry kind="src" path="src"/>
+	<buildpathentry kind="lib" path="doc/problemexamples/problemtemplate.zip"/>
+	<buildpathentry kind="lib" path="doc/problemexamples/abacaxi.zip"/>
+	<buildpathentry kind="lib" path="doc/problemexamples/multas.zip"/>
+	<buildpathentry kind="lib" path="doc/problemexamples/bits.zip"/>
+	<buildpathentry kind="lib" path="doc/problemexamples/formiga.zip"/>
+	<buildpathentry kind="src" path="test"/>
+	<buildpathentry kind="src" path="vendor"/>
+	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
+</buildpath>

@@ -1,0 +1,4 @@
+mkdir -p simulation
+ghdl -i --std=02 --ieee=synopsys --workdir=simulation  testbench/circuito_tb.vhd src/*
+ghdl -m --std=02 --ieee=synopsys --workdir=simulation  circuito_tb
+simulation/circuito_tb --assert-level=error --stop-time=1000ns --vcdgz=simulation/circuito_tb.vcdgz

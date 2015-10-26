@@ -1,0 +1,89 @@
+# Projeto gcg
+# GHDL Code Gen (gcg) - (http://code.google.com/p/gcg/)
+# 
+# Rogério A. Gonçalves
+# rogerio.rag@gmail.com
+# http://rag.pro.br
+#
+# O Makefile, bem como os templates foram criados para facilitar a criação e 
+# execução de projetos VHDL em GHDL (http://ghdl.free.fr). 
+
+Passo a Passo
+------------------------------------------------------------------------
+Faça download do código do gcg, copie o diretório src e renomeie para o 
+nome da entidade principal do seu novo projeto.
+Acesse o diretório do novo projeto e execute os comandos.
+
+Criar diretórios do projeto e arquivos iniciais.
+------------------------------------------------------------------------
+make new PROJECT=NomeEntidade ARCH=TipoArquitetura IN="port1, ..., portN" 
+OUT="port1, ..., portN"
+ou
+make new PROJECT=NomeEntidade ARCH=TipoArquitetura IN=porta1,porta2,portaN OUT=porta1,porta2,portaN
+
+Onde:
+PROJECT: Nome da entidade que está sendo projetada.
+ARCH: valores possíveis {logica, estrutural, condicional}, usando "estrutural" 
+a declaração dos componentes será feita.
+IN: portas de entrada.
+OUT: portas de saida.
+
+Observação:
+As variáveis que são passadas ao make ou devem ser escritas sem espaço (IN=porta1,porta2,portaN) ou com espaços e entre aspas (IN="porta1, porta2, 
+portaN"), pois ao encontrar um espaço o make irá entender que ali acaba a 
+definição da variável.
+
+Editar os arquivos do projeto
+------------------------------------------------------------------------
+Use um editor de sua preferência para modificar os arquivos: src/nomeEntidade.vhd e  testbench/nomeEntidade_tb.vhd
+
+Substitua as tags <<type>> com o nome do tipo apropriado (bit, std_logic e etc).
+
+Crie os comandos da architecture no arquivo src/nomeEntidade.vhd e os casos de teste no arquivo testbench/nomeEntidade_tb.vhd.
+
+
+Compilar, Executar e Visualizar os Resultados.
+------------------------------------------------------------------------
+make compile TESTBENCH=nomeEntidade_tb
+make run TESTBENCH=nomeEntidade_tb
+make view TESTBENCH=nomeEntidade_tb
+
+# Comando Make all (faz tudo): compile, run and view.
+make all TESTBENCH=entityName_tb
+
+Comando para limpar o projeto (Apagar diretorio de simulacao)
+------------------------------------------------------------------------
+make clean
+
+Comandos com acessibilidade usando o leitor de forma de onda wavevox.
+------------------------------------------------------------------------
+Ouvir os resultados usando wavevox
+------------------------------------------------------------------------
+make viewacc
+
+Compilar, Executar e Ouvir os resultados.
+------------------------------------------------------------------------
+make allacc
+
+Observações:
+Na comparação de variáveis do tipo std_logic_vector o uso do operador "=" tem apresentado o erro:
+testbench/and2_tb.vhd:51:15: operator "=" is overloaded
+testbench/and2_tb.vhd:51:15: possible interpretations are:
+../../../src/synopsys/std_logic_unsigned.vhdl:64:14: function "=" [std_logic_vector, std_logic_vector return boolean]
+../../../src/ieee/std_logic_1164.v93:69:10: implicit function "=" [std_logic_vector, std_logic_vector return boolean]
+testbench/and2_tb.vhd:51:15: (you may like to use the -fexplicit option)
+make: ** [compile] Erro 1
+
+Por exemplo, se a linha do erro for: 
+ if (s_t_c = pe_c) then
+troque por:
+if (ieee.std_logic_unsigned."=" (s_t_c , pe_c)) then
+
+É a utilização do operador em modo funcional.
+
+Nos asserts isso também pode ocorrer:
+Exemplo:
+assert s_t_cnt = patterns(i).vo_cnt report "Valor de s_t_cnt não confere com o resultado esperado." severity error;
+
+Por:
+assert ieee.std_logic_unsigned."=" (s_t_cnt , patterns(i).vo_cnt) report "Valor de s_t_cnt não confere com o resultado esperado." severity error;

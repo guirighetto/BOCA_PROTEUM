@@ -1,0 +1,22 @@
+v 3
+file "/home/guilherme/Documentos/projeto/vhdlrunner/ex2/" "src/or4.vhd" "20130815183238.000" "20150708143514.652":
+  entity or4 at 6( 117) + 0 on 21;
+  architecture logica of or4 at 15( 302) + 0 on 22;
+file "/home/guilherme/Documentos/projeto/vhdlrunner/ex2/" "src/nor3.vhd" "20130815183158.000" "20150708143514.618":
+  entity nor3 at 6( 118) + 0 on 19;
+  architecture logica of nor3 at 15( 302) + 0 on 20;
+file "/home/guilherme/Documentos/projeto/vhdlrunner/ex2/" "src/nand3.vhd" "20130815183112.000" "20150708143514.682":
+  entity nand3 at 6( 119) + 0 on 23;
+  architecture logica of nand3 at 15( 305) + 0 on 24;
+file "/home/guilherme/Documentos/projeto/vhdlrunner/ex2/" "src/inversor.vhd" "20130815183032.000" "20150708143514.582":
+  entity inversor at 6( 122) + 0 on 17;
+  architecture logica of inversor at 15( 308) + 0 on 18;
+file "/home/guilherme/Documentos/projeto/vhdlrunner/ex2/" "src/circuito.vhd~" "20150430025824.000" "20150708143514.365":
+  entity circuito at 6( 122) + 0 on 11;
+  architecture estrutural of circuito at 15( 317) + 0 on 12;
+file "/home/guilherme/Documentos/projeto/vhdlrunner/ex2/" "src/and3.vhd" "20150625044827.000" "20150708143514.547":
+  entity and3 at 6( 118) + 0 on 15;
+  architecture logica of and3 at 15( 302) + 0 on 16;
+file "/home/guilherme/Documentos/projeto/vhdlrunner/ex2/" "testbench/circuito_tb.vhd" "20150708173436.000" "20150708143514.466":
+  entity circuito_tb at 1( 0) + 0 on 13;
+  architecture estrutural of circuito_tb at 13( 218) + 0 on 14;
