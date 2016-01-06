@@ -19,6 +19,7 @@
 require_once(__DIR__ . '/BocaConf.class.php');
 require_once(__DIR__ . '/../db.php');
 require_once(__DIR__ . '/../lib/FileUtil.class.php');
+require_once(__DIR__ . '/../Proteum.class.php');
 
 class AutoJudge
 {
@@ -42,6 +43,23 @@ class AutoJudge
 		$this->password = md5(mt_rand() . rand() . mt_rand());
 		umask(0022);
 		$this->activeContests = array();
+	}
+
+	private execProteum($dirUnderTesting,$fileUnderTesting,$dirCaseTest,$sizeTests)
+	{
+		$nameProblem = substr($fileUnderTesting,0,-4);
+		
+		$proteum = new Proteum;
+		$proteum->setWorkingDir($dirUnderTesting);
+		$proteum->setMainFile($nameProblem);
+		$proteum->createSession($nameProblem, $fileUnderTesting);
+		$proteum->createTestSet($nameProblem);
+		$proteum->generateMutants($nameProblem, $nameProblem);
+		changeVersion($dirUnderTesting,'2',$nameProblem);
+		$proteum->importAsciiTestCase2($nameProblem,$dirCaseTest,'case','param',$sizeTests,'1');
+		changeVersion($dirUnderTesting,'1',$nameProblem);
+		$proteum->execMutants($nameProblem);
+		$proteum->statusReport();
 	}
 
 	public refreshContests() {

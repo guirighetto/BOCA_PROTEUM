@@ -782,41 +782,6 @@ while(42) {
 }
 
 
-
-	function execProteum($dirUnderTesting,$fileUnderTesting,$dirCaseTest,$sizeTests)
-	{
-		$nameProblem = substr($fileUnderTesting,0,-4);
-		
-
-		$proteum = new Proteum;
-		$proteum->setWorkingDir($dirUnderTesting);
-		$proteum->setMainFile($nameProblem);
-		$proteum->createSession($nameProblem, $fileUnderTesting);
-		$proteum->createTestSet($nameProblem);
-		$proteum->generateMutants($nameProblem, $nameProblem);
-		changeVersion($dirUnderTesting,'2',$nameProblem);
-		$proteum->importAsciiTestCase2($nameProblem,$dirCaseTest,'case','param',$sizeTests,'1');
-		changeVersion($dirUnderTesting,'1',$nameProblem);
-		$proteum->execMutants($nameProblem);
-		$proteum->statusReport();
-	}
-
-	function changeVersion($dirUnderTesting,$version,$nameProblem)
-	{
-		$conteudo = file_get_contents($dirUnderTesting.$nameProblem.'.IOL');
-		$fp = fopen($dirUnderTesting.$nameProblem.'.IOL','w'); 
-		$conteudo[35] = $version;
-		fwrite($fp, $conteudo);
-		fclose($fp);
-		
-		$conteudo = file_get_contents($dirUnderTesting.$nameProblem.'.TCS');
-		$fp = fopen($dirUnderTesting.$nameProblem.'.TCS','w'); 
-		$conteudo[37] = $version;
-		fwrite($fp, $conteudo);
-		fclose($fp);
-		
-	}
-
 	function createDir($main_file,$path_files = NULL)
 	{
 

@@ -399,5 +399,21 @@ class Proteum
 
 		return $reports;
 	}
+
+	private function changeVersion($dirUnderTesting,$version,$nameProblem)
+	{
+		$conteudo = file_get_contents($dirUnderTesting.$nameProblem.'.IOL');
+		$fp = fopen($dirUnderTesting.$nameProblem.'.IOL','w'); 
+		$conteudo[35] = $version;
+		fwrite($fp, $conteudo);
+		fclose($fp);
+		
+		$conteudo = file_get_contents($dirUnderTesting.$nameProblem.'.TCS');
+		$fp = fopen($dirUnderTesting.$nameProblem.'.TCS','w'); 
+		$conteudo[37] = $version;
+		fwrite($fp, $conteudo);
+		fclose($fp);
+		
+	}
 }
 ?>
