@@ -45,23 +45,6 @@ class AutoJudge
 		$this->activeContests = array();
 	}
 
-	private execProteum($dirUnderTesting,$fileUnderTesting,$dirCaseTest,$sizeTests)
-	{
-		$nameProblem = substr($fileUnderTesting,0,-4);
-		
-		$proteum = new Proteum;
-		$proteum->setWorkingDir($dirUnderTesting);
-		$proteum->setMainFile($nameProblem);
-		$proteum->createSession($nameProblem, $fileUnderTesting);
-		$proteum->createTestSet($nameProblem);
-		$proteum->generateMutants($nameProblem, $nameProblem);
-		changeVersion($dirUnderTesting,'2',$nameProblem);
-		$proteum->importAsciiTestCase2($nameProblem,$dirCaseTest,'case','param',$sizeTests,'1');
-		changeVersion($dirUnderTesting,'1',$nameProblem);
-		$proteum->execMutants($nameProblem);
-		$proteum->statusReport();
-	}
-
 	public refreshContests() {
 		// TODO: make it load several contests instead of just one.
 		$currentContest = DBGetActiveContest();

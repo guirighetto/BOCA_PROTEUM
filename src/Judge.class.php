@@ -2,10 +2,15 @@
 
 require_once(__DIR__ . '/Gcc.class.php');
 require_once(__DIR__ . '/Runner.class.php');
+require_once(__DIR__ . '/BreakTcase.class.php');
+require_once(__DIR__ . '/Proteum.class.php')
 
 
 class Judge
 {
+
+	const DEFAULT_RESULT_PROBLEM_FILE = '/ResultProblem.txt';
+
 	/** tipos de erros 
 	  * Resposta					Descrição
 	  * YES 						Seu programa foi aceito, e você receberá um balão da cor correspondente ao problema.
@@ -25,23 +30,21 @@ class Judge
 	  * output format error, -9 if incorrect output, -10 if unknown error
 	  * (contact staff).
  	  */
- 	public function judge($work_dir, $output_dir = NULL, $output_main = NULL)
+ 	public function judge($work_dir, $output_dir = NULL, $output_main = NULL, $submission)
 	{
 		try {
-			if ($result == 1){
-				// Compilar usando GccCompiler
-				$gcccompiler = new GccCompiler();
-				$result = $gcccompiler->compile($workdir, $output_dir, $output_main);
-				if($result == -2){
-					echo " NO: Compilation Error\n";
-					return $result;
-				}
+			// Compilar usando GccCompiler
+			$gcccompiler = new GccCompiler();
+			$result = $gcccompiler->compile($submission->$workdir, $output_dir, $output_main);
+			if($result == -2){
+				echo " NO: Compilation Error\n";
+				return $result;
 			}
-
+			
 			if ($result == 2){
 				// Executar usando Runner
 				$runner = new Runner();
-				$result = $runner->execute($output_dir . '/' . $output_main, NULL, NULL, __DIR__ . '/f91/entrada_f91', './output.txt');
+				$result = $runner->execute($output_dir . '/' . $output_main, NULL, NULL, $submission->workDir, $submission->workDir.DEFAULT_RESULT_PROBLEM_FILE);
 				if($result == -4) {
 					echo "NO: Time-limit Exceeded\n";
 					return $result;
@@ -50,7 +53,7 @@ class Judge
 
 			if ($result == 4){
 				//Comparar resultado
-				$result =  $this->compareResult(__DIR__.'/f91/saida_f91', __DIR__.'/output.txt');
+				$result =  $this->compareResult($submission->workDir, $submission->workDir.DEFAULT_RESULT_PROBLEM_FILE);
 				if($result == -8) {
 					echo "NO: Output Format Error \n";
 					return $result;
@@ -65,6 +68,15 @@ class Judge
 				echo "YES\n";
 				return $result;
 			}
+
+			//Break Test Case
+			$breakTcase = new BreakTcase(substr($submission->$problem->$sourcename,0,-2),$submission->workDir);
+			$breakTcase->setType($submission->$problem->$type);
+			foreach (glob('*') as $arquivo) 
+				$ret = $breakTcase->breakFile($arquivo);//Importar os casos de teste antes de execProteum
+
+    			//Proteum
+			execProteum($submission->workDir,$submission->problem->sourcename,$ret[0],strval($ret[1]));
 
 			return -10;
 
@@ -102,6 +114,23 @@ class Judge
 			}
 		}
 		return 8;
+	}
+
+	private function execProteum($dirUnderTesting,$fileUnderTesting,$dirCaseTest,$sizeTests)
+	{
+		$nameProblem = substr($fileUnderTesting,0,-4);
+		
+		$proteum = new Proteum;
+		$proteum->setWorkingDir($dirUnderTesting);
+		$proteum->setMainFile($nameProblem);
+		$proteum->createSession($nameProblem, $fileUnderTesting);
+		$proteum->createTestSet($nameProblem);
+		$proteum->generateMutants($nameProblem, $nameProblem);
+		$proteum->changeVersion($dirUnderTesting,'2',$nameProblem);
+		$proteum->importAsciiTestCase2($nameProblem,$dirCaseTest,'case','param',$sizeTests,'1');
+		$proteum->changeVersion($dirUnderTesting,'1',$nameProblem);
+		$proteum->execMutants($nameProblem);
+		$proteum->statusReport();
 	}
 }
 
