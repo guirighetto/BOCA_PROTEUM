@@ -25,8 +25,12 @@ class Runner
 	 */
 	function execute($command, $args = NULL, $env = NULL, $input = NULL, $output = NULL, $timeout = Runner::DEFAULT_TIMEOUT) { 
 		if ($input != NULL) {
-			$pipe_filename = tempnam(sys_get_temp_dir(), 'boca-');
-			posix_mkfifo($pipe_filename, 0600);
+			$pipe_filename = tempnam(sys_get_temp_dir(),"boca-");
+			unlink($pipe_filename);
+			$result = TRUE;
+			$mode=0600;
+			umask(0);
+			$result = posix_mkfifo($pipe_filename, $mode);
 		}
 
 		$pid = pcntl_fork();
@@ -96,7 +100,8 @@ class Runner
 			return pcntl_wexitstatus($status);
 		}
 		if (pcntl_wifsignaled($status) || pcntl_wifstopped($status)) {
-			return -1;
+			throw new RuntimeError();
+			#return -1;
 		}
 	}
 

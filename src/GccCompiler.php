@@ -70,19 +70,22 @@ class GccCompiler {
 					$command .= '-pass-exit-codes';
 					exec($command, $exec_output, $exit_code);
 					if ($exit_code != 0) {
-						throw new Exception('Error on compiling the file ' . $file_name, $exit_code);  // return 8;
+					#	throw new Exception('Error on compiling the file ' . $file_name, $exit_code);  // return 8;
+						throw new CompilationError();
 					}
 					$object_files[] = $object_file;
 				} else {
 					// Handling main exec
 					if ($main_file != null) {
-						throw new Exception('More than one file with the main function has been found', 8);
+						#throw new Exception('More than one file with the main function has been found', 8);
+						throw new CompilationError();
 					} else {
 						$main_file = $file_name;
 					}
 				}
 			}
 		}
+
 
 		$command = GccCompiler::DEFAULT_C_COMPILER;
 		$command .= ' ';
@@ -94,8 +97,11 @@ class GccCompiler {
 		$command .= ' ';
 		$command .= implode(' ', $object_files);
 		exec($command, $exec_output, $exit_code);
+	
 		if ($exit_code != 0) {
-			throw new Exception('Error on linking the main file', $exit_code); // return 6;
+		#throw new Exception('Error on linking the main file', $exit_code); // return 6;
+			throw new CompilationError();
+			
 		}
 
 		return 0;

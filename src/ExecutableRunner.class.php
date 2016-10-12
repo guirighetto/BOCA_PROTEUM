@@ -1,5 +1,5 @@
 <?php
-
+require_once(__DIR__ . '/Filesystem.class.php');
 /**
  * Control the execution of a program.
  *
@@ -8,32 +8,40 @@
 class ExecutableRunner
 {
 	/**
+	 * Prefix of the directory created with results of the execution of the file.
+	 */
+	const OUTPUT_PREFIX = 'results';
+	/**
+	 * Default time for timeout when running a command (in seconds).
+	 */
+	const DEFAULT_TIMEOUT = 30;
+	/**
 	 * Current dir.
 	 */
 	private $workingDir = NULL;
-
 	/**
 	 * Environment variables.
 	 */
 	private $env = array();
-
 	/**
 	 * Reset all environment variables before running (using just the ones from $this-env).
 	 * Default is false.
 	 */
 	private $resetEnv = False;
-
 	/**
 	 * Constructor of the executable runner.
 	 *
 	 * @param $workingDir Working directory (current directory) to be used when
 	 * running the program.
 	 */
-	public function __construct()
+	public function __construct($submission, $workingDir = NULL)
 	{
-		parent::__construct();
+		// parent::__construct();
+		if ($workingDir == NULL) {
+			$workingDir = tempdir($submission->getWorkDir(), ExecutableRunner::OUTPUT_PREFIX);
+		}
+		$this->setWorkingDir($workingDir);
 	}
-
 	/**
 	 * Set an environment variable.
 	 *
@@ -50,7 +58,6 @@ class ExecutableRunner
 		$this->env[$key] = $value;
 		return $oldValue;
 	}
-
 	/**
 	 * Get an environment variable set specifically to this runner.
 	 *
@@ -65,7 +72,6 @@ class ExecutableRunner
 			return NULL;
 		}
 	}
-
 	/**
 	 * Unset an environment variable set specifically to this runner.
 	 *
@@ -81,8 +87,6 @@ class ExecutableRunner
 		}
 		return $oldValue;
 	}
-
-
 	/**
 	 * Control the use of current environment variables when running the command.
 	 */
@@ -93,7 +97,6 @@ class ExecutableRunner
 		}
 		$this->resetEnv = $reset;
 	}
-
 	/**
 	 * Get whether we should use of current environment variables when running the command.
 	 */
@@ -101,7 +104,6 @@ class ExecutableRunner
 	{
 		return $this->resetEnv;
 	}
-
 	/**
 	 * Set working dir (when running the command, the runner will change to this dir.
 	 */
@@ -109,8 +111,6 @@ class ExecutableRunner
 	{
 		$this->workingDir = $dir;
 	}
-
-
 	/**
 	 * Get working dir.
 	 *
@@ -120,69 +120,102 @@ class ExecutableRunner
 	{
 		return $this->workingDir;
 	}
-
-
-
 	/**
-	 * Run command.
-	 * 
-	 * @param $stdin Filename to be used as input. If NULL, will use the stdin as input (pipe).
-	 * @param $stdout Filename to be used as output. If NULL, will use the stdout as output (pipe).
-	 * @param $stderr Filename to be used as error output. If NULL, will use the stderr as input (pipe).
+	 * Execute a command.
 	 *
-	 * @return The command exit code or -1 on error.
+	 * @param $command Command to be run.
+	 * @param $args Arguments of the command to be run.
+	 * @param $env Environment variables to be set before running the command.
+	 * @param $input Data to be sent (piped) to the process. Default to null (no data will be sent to the process).
+	 * If a string, it will be sent to the process as text. If it is a file or filename, data will be read from the file and
+	 * sent to the process through the pipe.
+	 * @param $output Output data. Default to null (no output data will be saved). If it is a filename,
+	 * output data will be written to the file.
+	 * @param $timeout Seconds before timing out and aborting execution.
+	 *
+	 * @returns Zero if ok, anything else on error.
 	 */
-	public function run($command, $stdin = NULL, $stdout = NULL, $stderr = NULL)
-	{
-		$descriptorspec = array();
-		$isStdinPipe = false;
-		$isStdoutPipe = false;
-		$isStderrPipe = false;
-		if ($stdin == NULL) {
-			$descriptorspec[0] = array('pipe', 'r');
-			$isStdinPipe = true;
-		} else {
-			$descriptorspec[0] = array('file', $stdin, 'r');
+	function execute($command, $args = NULL, $env = NULL, $input = NULL, $output = NULL, $timeout = ExecutableRunner::DEFAULT_TIMEOUT) { 
+		if ($input != NULL) {
+			$pipe_filename = tempnam(sys_get_temp_dir(), 'boca-');
+			posix_mkfifo($pipe_filename, 0600);
 		}
-		if ($stdout == NULL) {
-			$descriptorspec[1] = array('pipe', '2');
-			$isStdoutPipe = true;
-		} else {
-			$descriptorspec[1] = array('file', $stdout, 'w');
-		}
-		if ($stderr == NULL) {
-			$descriptorspec[2] = array('pipe', 'r');
-			$isStderrPipe = true;
-		} else {
-			$descriptorspec[2] = array('file', $stdin, 'w');
-		}
-
-		$env = array();
-		if (! $this->resetEnv) {
-			foreach ($_ENV as $key => $value) {
+		$pid = pcntl_fork();
+		if ($pid == 0) { // Child
+			// Redirects stdin to pipe (the client will read data from pipe while the parent will write to it)
+			fclose(STDIN);
+			if ($input != NULL) {
+				$STDIN = fopen($pipe_filename, 'r');
+			}
+			// Redirects stdout to file
+			if ($output != NULL) {
+				if (is_resource($output) || is_string($output)) {
+					fclose(STDOUT);
+					fclose(STDERR);
+					if (! is_resource($output)) {
+						$output_file = fopen($output, 'w');
+					} else {
+						$output_file = $output;
+					}
+					$STDOUT = $output_file;
+					$STDERR = $output_file;
+				} else {
+					// fwrite($output, );
+				}	
+			}
+			// Setup timeout mechanism
+			pcntl_signal(SIGALRM, function($signal) {
+				fflush(STDOUT);
+				fclose(STDOUT);
+				fflush(STDERR);
+				fclose(STDERR);
+				posix_kill(posix_getpid(), SIGTERM);
+			});
+			pcntl_alarm($timeout);
+			// Configure environment
+			$env = array();
+			if (! $this->resetEnv) {
+				foreach ($_ENV as $key => $value) {
+					$env[$key] = $value;
+				}
+			}
+			foreach ($this->env as $key => $value) {
 				$env[$key] = $value;
 			}
+			// Run command
+			if ($args == NULL) {
+				pcntl_exec($command);
+			} else if ($env == NULL) {  // TODO: check what PHP does when pcntl_exec has $args or $env as NULL
+				pcntl_exec($command, $args);
+			} else {
+				pcntl_exec($command, $args, $env);
+			}
+		} else { // Parent
+			if ($input != NULL) {
+				$pipe = fopen($pipe_filename, 'w');
+				if (is_resource($input) || is_file($input)) {
+					if (is_file($input)) {
+						$input_file = fopen($input, 'r');
+					} else {
+						$input_file = $input;
+					}
+					$input_data = fread($input_file, filesize($input));
+					fclose($input_file);
+				} else {
+					$input_data = $input;
+				}
+				fwrite($pipe, $input_data);
+				fclose($pipe);
+			}
 		}
-		foreach ($this->env as $key => $value) {
-			$env[$key] = $value;
+		if ($input != NULL) {
+			unlink($pipe_filename);
 		}
-
-		$process = proc_open($command, $descriptorspec, $pipes, $this->workingDir, $env);
-		if (is_resource($process)) {
-			// It is important that you close any pipes before calling proc_close in order to avoid a deadlock
-
-			if ($isStdinPipe) {
-				fclose($pipes[0]);
-			}
-			if ($isStdoutPipe) {
-			 	fclose($pipes[1]);
-			}
-			if ($isStderrPipe) {
-				fclose($pipes[2]);
-			}
-		    	$return_value = proc_close($process);
-			return $return_value;
-		} else {
+		pcntl_waitpid($pid, $status);
+		if (pcntl_wifexited($status)) {
+			return pcntl_wexitstatus($status);
+		}
+		if (pcntl_wifsignaled($status) || pcntl_wifstopped($status)) {
 			return -1;
 		}
 	}

@@ -3,6 +3,11 @@
 	"description": "BOCA",
 	"version": "2.0.0-dev",
 	"type": "project",
+	"autoload": {
+		"psr-0": {
+			"": "src/"
+		}
+	},
 	"require": {
 		"cogpowered/finediff": "0.3.*"	
 	},

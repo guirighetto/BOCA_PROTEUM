@@ -1,0 +1,10 @@
+PROTEUM - PROGRAM TEST FILE
+Jan-11-16
+V 1.1 - IM
+              
+Prime
+Prime
+gcc Prime.c -o Prime -lm
+Research
+<N O  A N O M A L I E S>
+<A L L   F U N C T I O N S>

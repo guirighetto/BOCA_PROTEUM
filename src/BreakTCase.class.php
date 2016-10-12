@@ -27,35 +27,81 @@ class BreakTcase
 	{
 		$this->type = $value;
 	}
+
+	function import($pathInput = NULL)
+	{
+
+		if($pathInput != NULL)
+		{
+			$ret = NULL;
+			$tCases = NULL;
+			$i = 0;
+			$tCases = array();
+			$testCases = array();
 		
-	function breakFile($fileName)
+			foreach (glob($pathInput.'*') as $nameFile)
+			{
+				$nameFile = substr($nameFile, strlen($pathInput));
+				$ret = $this->breakFile($nameFile,$ret[0],$ret[1]);
+				$tCases[$i] = $ret[2];
+
+				$testCases = array_merge($testCases,$tCases[$i]);
+
+				$i+=1;
+			}
+
+			return $testCases;
+		}
+	}
+
+	function export($testCases, $nameFolder)
+	{
+		$sizeTestCases = sizeof($testCases);
+		$i = 0;
+		$pathFolder = $this->createDir($nameFolder);
+
+		$fp = fopen($pathFolder.'/'.$this->mainFile,'w');
+
+		while($i < $sizeTestCases)
+		{
+			fwrite($fp,$testCases[$i]);
+			$i+=1;
+		}
+
+		fclose($fp);
+
+		return $pathFolder;
+
+	}
+
+
+		
+	function breakFile($fileName, $dirTcases = NULL, $lastIndex = NULL)
 	{
 		$ret = array();
 		
-		$pathFolder = $this->createDir();
+		if($dirTcases == NULL)
+			$pathFolder = $this->createDir();
+		else
+			$pathFolder = $dirTcases;
 		$numbersTcase = NULL;		
-
 		if($this->type == 6)
 		{
 			$content = file_get_contents($this->path.'/'.$fileName);
 			$lines = file($this->path.'/'.$fileName);
 			$InputValue = NULL;
 			$i = strlen($content)-1;
-
 			if($content[$i] == "\n")
 				$i = $i - 1;
-
 			while($content[$i] != "\n")
 			{
 				$InputValue .= $content[$i];
 				$i--;
 			}
-
 			$i = 0;
 			$j = 0;
 			$index = 1;	
 			$value = NULL;
-
 			$fp = fopen($pathFolder."/case".$index,'w');			
 			foreach ($lines as $line)
 			{
@@ -74,14 +120,11 @@ class BreakTcase
 			}
 			system("rm ".$pathFolder."/case".($index-1));
 			system("rm ".$pathFolder."/case".$index);
-
 			$numbersTcase = $index;
-
 		}
 		else if($this->type == 5)
 		{
 			$content = file_get_contents($this->path.'/'.$fileName);
-
 			$j=0;
 			while($content[$j] != "\n")
 			{
@@ -121,21 +164,17 @@ class BreakTcase
 			$lines = file($this->path.'/'.$fileName);
 			$InputValue = NULL;
 			$i = strlen($content)-1;
-
 			if($content[$i] == "\n")
 				$i = $i - 1;
-
 			while($content[$i] != "\n")
 			{
 				$InputValue .= $content[$i];
 				$i--;
 			}
-
 			$i = 0;
 			$j = 0;
 			$index = 1;	
 			$value = NULL;
-
 			$fp = fopen($pathFolder."/case".$index,'w');			
 			foreach ($lines as $line)
 			{
@@ -150,9 +189,7 @@ class BreakTcase
 			}
 			system("rm ".$pathFolder."/case".($index-1));
 			system("rm ".$pathFolder."/case".$index);
-
 			$numbersTcase = $index;
-
 		}
 		else if($this->type == 3)
 		{
@@ -160,21 +197,17 @@ class BreakTcase
 			$lines = file($this->path.'/'.$fileName);
 			$InputValue = NULL;
 			$i = strlen($content)-1;
-
 			if($content[$i] == "\n")
 				$i = $i - 1;
-
 			while($content[$i] != "\n")
 			{
 				$InputValue .= $content[$i];
 				$i--;
 			}
-
 			$i = 0;
 			$j = 0;
 			$index = 1;	
 			$value = NULL;
-
 			$fp = fopen($pathFolder."/case".$index,'w');			
 			foreach ($lines as $line)
 			{
@@ -191,16 +224,12 @@ class BreakTcase
 				{
 					$value .= $line;
 				}
-
 			}
-
 			$numbersTcase = $index;
-
 		}
 		else if($this->type == 2)
 		{
 			$content = file_get_contents($this->path.'/'.$fileName);
-
 			$j=0;
 			while($content[$j] != "\n")
 			{
@@ -227,55 +256,77 @@ class BreakTcase
 				$i++;
 			}
 		}
-		else
+		else if($this->type == 1)
 		{
+			$y = array();
+			$content = NULL;
+
+
 			$content = file_get_contents($this->path.'/'.$fileName);
 			$j=0;
-			$index = 1;
-			while($content[$j] != NULL)
+			if($lastIndex == NULL)
+				$index = 1;
+			else
+				$index = $lastIndex;
+
+			$sizeContent = strlen($content);
+
+			while($j < $sizeContent)
 			{
 				$fp = fopen($pathFolder."/case".$index,'w');
 				
 				$value = NULL;
-				while($content[$j] != "\n")
+
+
+				while($j < $sizeContent and $content[$j] != "\n")
 				{
 					$value .= $content[$j];
 					$j++;
 				}
+
+				$value = $value . "\n";
 				$index++;
 				fwrite($fp,$value);
+				$y[$index-1] = $value;
+
 				fclose($fp);
 				$j++;
 			}
 
 			$numbersTcase = $index;
 		}
-
 		$ret[0] = $pathFolder;
 		$ret[1] = $numbersTcase;
+		$ret[2] = $y;
 		
 		return $ret;
 	}
 
-	function createDir()
+
+	function createDir($nameFolder = NULL)
 	{
-
 		$index = 0;
-
 		do
 		{
 			$index++;	
 			$command = 'mkdir ';
 			$command .= $this->path;
-			$command .= '/Tcase_';
-			$command .= $this->mainFile;
-			$command .= '_';
-			$command .= $index;
+			if($nameFolder == NULL)
+			{
+				$command .= '/Tcase_';
+				$command .= $this->mainFile;
+				$command .= '_';
+				$command .= $index;
+			}
+			else
+			{
+				$command .= '/'.$nameFolder;
+				$command .= '_'.$index;
+			}
 
 			system($command,$return);
 			
 		}while($return == 1);
-
 		return substr($command,6);
 	}
 }

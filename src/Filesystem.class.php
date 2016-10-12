@@ -101,11 +101,11 @@ function rmdirr_alternative($dirname)
 
 function tempdir($basedir, $prefix)
 {
-	$filename = tempnam($dir, $prefix);
+	$filename = tempnam($basedir, $prefix);
 	unlink($filename);
 	mkdir($filename);
 
-	return filename;
+	return $filename;
 }
 
 function dir_has_file($dirname, $filename)

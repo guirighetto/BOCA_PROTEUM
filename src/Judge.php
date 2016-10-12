@@ -1,15 +1,23 @@
 <?php
 
-require_once(__DIR__ . '/Gcc.class.php');
-require_once(__DIR__ . '/Runner.class.php');
-require_once(__DIR__ . '/BreakTcase.class.php');
-require_once(__DIR__ . '/Proteum.class.php')
+#require_once(__DIR__ . '/Gcc.class.php');
+#require_once(__DIR__ . '/Runner.class.php');
+#require_once(__DIR__ . '/BreakTcase.class.php');
+#require_once(__DIR__ . '/Proteum.class.php');
+#require_once(__DIR__ . '/Filesystem.class.php');
+#require_once(__DIR__ . '/finediff.php');
 
 
 class Judge
 {
 
+	#colocar sistema de exceção
+	#colocar set para compiler
 	const DEFAULT_RESULT_PROBLEM_FILE = '/ResultProblem.txt';
+
+	private $compiler;
+
+	private $runner;
 
 	/** tipos de erros 
 	  * Resposta					Descrição
@@ -30,70 +38,89 @@ class Judge
 	  * output format error, -9 if incorrect output, -10 if unknown error
 	  * (contact staff).
  	  */
- 	public function judge($work_dir, $output_dir = NULL, $output_main = NULL, $submission)
+	public function __construct($compiler, $runner)
 	{
-		try {
-			// Compilar usando GccCompiler
-			$gcccompiler = new GccCompiler();
-			$result = $gcccompiler->compile($submission->$workdir, $output_dir, $output_main);
-			if($result == -2){
-				echo " NO: Compilation Error\n";
-				return $result;
-			}
-			
-			if ($result == 2){
-				// Executar usando Runner
-				$runner = new Runner();
-				$result = $runner->execute($output_dir . '/' . $output_main, NULL, NULL, $submission->workDir, $submission->workDir.DEFAULT_RESULT_PROBLEM_FILE);
-				if($result == -4) {
-					echo "NO: Time-limit Exceeded\n";
-					return $result;
-				}
-			}
+		$this->setCompiler($compiler);
+		$this->setRunner($runner);
+	}
 
-			if ($result == 4){
-				//Comparar resultado
-				$result =  $this->compareResult($submission->workDir, $submission->workDir.DEFAULT_RESULT_PROBLEM_FILE);
-				if($result == -8) {
-					echo "NO: Output Format Error \n";
-					return $result;
-				}
-				else if($result == -9){
-					echo "NO: Incorrect Output \n";
-					return $result;
-				}
-			}
 
-			if($result == 8){
-				echo "YES\n";
-				return $result;
-			}
 
-			//Break Test Case
-			$breakTcase = new BreakTcase(substr($submission->$problem->$sourcename,0,-2),$submission->workDir);
-			$breakTcase->setType($submission->$problem->$type);
-			foreach (glob('*') as $arquivo) 
-				$ret = $breakTcase->breakFile($arquivo);//Importar os casos de teste antes de execProteum
+ 	public function judge($work_dir, $submission, $output_main = NULL, $output_dir = NULL)
+	{	
+		
+		$date = '10-09-2016';
+		$judge = 'Junior';
+		$result = new Result($judge,$date);
+		
 
-    			//Proteum
-			execProteum($submission->workDir,$submission->problem->sourcename,$ret[0],strval($ret[1]));
-
-			return -10;
-
-		} catch (Exception $e) {
-			return -10;
+		try 
+		{
+			$this->getCompiler()->compile($submission->getWorkDir(), $output_dir, $output_main);
 		}
+		catch(CompilationError $e)
+		{
+			#$result->setArrayErrors($e);
+			#$result->arrayErrors = array();
+			#$result->arrayErrors[] = $e;
+			array_push($result->arrayErrors, $e);
+			print_r($result->arrayErrors);
+
+		}
+		
+		try
+		{
+			$this->getRunner()->execute($work_dir . '/' . $output_main, NULL, NULL, $submission->getWorkDir(), $submission->getWorkDir().Judge::DEFAULT_RESULT_PROBLEM_FILE);
+		}
+		catch(RuntimeError $e)
+		{
+			$result->setArrayErrors($e);
+		}
+
+		try
+		{
+			$result =  $this->compareResult($submission->getWorkDir(), $submission->getWorkDir().Judge::DEFAULT_RESULT_PROBLEM_FILE);	
+		}
+		catch(OutputFormatError $e)
+		{
+			$result->setArrayErrors($e);
+		}
+		catch(IncorrectOutputError $e)
+		{
+			$result->setArrayErrors($e);
+		}
+			
+		if(empty($result->arrayErrors))
+		{
+			echo "YES\n";
+			$result->setAccept(True);
+		}
+		
+		//fazer if a respeito da linguagem C
+
+		//Break Test Case
+		/*$breakTcase = new BreakTcase(substr($submission->problem->sourcename,0,-2),$submission->workDir);
+		$breakTcase->setType($submission->problem->type);
+		foreach (glob('*') as $arquivo) 
+			$ret = $breakTcase->breakFile($arquivo);//Importar os casos de teste antes de execProteum
+
+			//Proteum
+		execProteum($submission->workDir,$submission->problem->sourcename,$ret[0],strval($ret[1]));
+		*/
+		#return -10;
+
+
 	}
 
 	private function compareResult($pathinput, $pathoutput){
-		$finediff = new FineDiff();
+		$finediff = new cogpowered\FineDiff\Diff;
 		$input = fopen($pathinput, "r");
 		$output = fopen($pathoutput, "r");
 
 		while(!feof ($input)){
 			$lineinp = fgets($input, 4096);
 			$lineout = fgets($output, 4096);
-			$opcodes = $finediff->getDiffOpcodes($lineinp, $lineout /*, default granularity is set to character */);
+			$opcodes = $finediff->getOpcodes($lineinp, $lineout /*, default granularity is set to character */);
 			for($i = 0; $i < strlen($opcodes); $i++){
 				if($opcodes[$i] == 'i'){
 					$i++;
@@ -102,18 +129,21 @@ class Judge
 					}
 					$i++;
 					if($opcodes[$i]!= ' ' || $opcodes[$i]!= '\t' || $opcodes[$i]!= '\n'){
-						return -8;
+						throw new IncorrectOutputError();
+						#return -8;
 					}
 					else{
-						return -9;
+						throw new OutputFormatError();
+						#return -9;
 					}
 				}
 				else if ($opcodes[$i] == 'd'){
-					return -9;
+					throw new OutputFormatError();
+				#	return -9;
 				}
 			}
 		}
-		return 8;
+		return 0;
 	}
 
 	private function execProteum($dirUnderTesting,$fileUnderTesting,$dirCaseTest,$sizeTests)
@@ -132,6 +162,21 @@ class Judge
 		$proteum->execMutants($nameProblem);
 		$proteum->statusReport();
 	}
+
+	public function setCompiler($compiler){
+		$this->compiler = $compiler;
+	}
+	public function getCompiler(){
+		return $this->compiler;
+	}
+
+	public function setRunner($runner){
+		$this->runner = $runner;
+	}
+	public function getRunner(){
+		return $this->runner;
+	}
+
 }
 
 ?>

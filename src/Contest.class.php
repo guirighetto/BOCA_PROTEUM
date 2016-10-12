@@ -2,11 +2,9 @@
 
 namespace BOCA;
 
-class Submission
+class Contest
 {
 	private $id;
-
-	private 
 }
 
 
