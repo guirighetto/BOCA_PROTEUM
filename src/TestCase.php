@@ -3,12 +3,18 @@
 class TestCase
 {
 
+	private $problemNumber;
+
+	private $testCaseNumber;
+	
 	private $input;
 
 	private $output;
 
 	public function __construct()
 	{
+		$this->problemNumber;
+		$this->testCaseNumber;
 		$this->input;
 		$this->output;
 	}
@@ -25,6 +31,20 @@ class TestCase
 	}
 	public function getOutput(){
 		return $this->output;
+	}
+
+	public function setProblemNumber($problemNumber){
+		$this->problemNumber = $problemNumber;
+	}
+	public function getProblemNumber(){
+		return $this->problemNumber;
+	}
+
+	public function setTestCaseNumber($testCaseNumber){
+		$this->testCaseNumber = $testCaseNumber;
+	}
+	public function getTestCaseNumber(){
+		return $this->testCaseNumber;
 	}
 
 }
